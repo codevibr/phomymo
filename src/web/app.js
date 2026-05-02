@@ -4,7 +4,7 @@
  * v116
  */
 
-import { CanvasRenderer } from './canvas.js?v=113';
+import { CanvasRenderer } from './canvas.js?v=114';
 import { BLETransport } from './ble.js?v=103';
 import { USBTransport } from './usb.js?v=101';
 import { print, printDensityTest, isDSeriesPrinter, isP12Printer, isA30Printer, isTapePrinter, isPM241Printer, isTSPLPrinter, isRotatedPrinter, getPrinterWidthBytes, getPrinterDpi, getPrinterAlignment, getPrinterDescription, isDeviceRecognized, getMatchedPattern, loadPrinterDefinitions, getAllPrinterDefinitions, getPrinterDefinition, getCustomPrinterDefinitions, saveCustomPrinterDefinition, deleteCustomPrinterDefinition, isBuiltinPrinter, resetBuiltinPrinter, getAvailableProtocols, getAvailableLabelPresets, getDetectedDefinition } from './printer.js?v=128';
@@ -84,7 +84,7 @@ import {
   D_SERIES_ROUND_LABELS,
   TAPE_LABEL_SIZES,
   PM241_LABEL_SIZES,
-} from './constants.js?v=104';
+} from './constants.js?v=105';
 import {
   bindCheckbox,
   bindToggleButton,
@@ -774,6 +774,8 @@ function updateLabelSizeDropdown(deviceName = '', model = 'auto') {
 
   // Show/hide tape width selector
   updateTapeWidthVisibility(isTape);
+  // Show "Continuous" checkbox in Custom row only for D-series
+  updateCustomContinuousVisibility(isDSeries);
 
   let rectSizes, roundSizes, defaultKey;
   if (isTape) {
@@ -1012,6 +1014,21 @@ function updateLengthAdjustButtons() {
 function updateTapeWidthVisibility(show) {
   $('#tape-width-selector')?.classList.toggle('hidden', !show);
   $('#mobile-tape-width-selector')?.classList.toggle('hidden', !show);
+}
+
+/**
+ * Show or hide the "Continuous" checkbox in the Custom size row.
+ * Only meaningful for D-series (M-series has no continuous mode; P12/A30 are
+ * always continuous and use a different UI).
+ * @param {boolean} show - Whether to show the continuous checkbox
+ */
+function updateCustomContinuousVisibility(show) {
+  $('#custom-continuous-wrap')?.classList.toggle('hidden', !show);
+  $('#mobile-custom-continuous-wrap')?.classList.toggle('hidden', !show);
+  if (!show) {
+    if ($('#custom-continuous')) $('#custom-continuous').checked = false;
+    if ($('#mobile-custom-continuous')) $('#mobile-custom-continuous').checked = false;
+  }
 }
 
 /**
@@ -2419,12 +2436,13 @@ function handleLabelSizeChange() {
     $('#custom-size').classList.remove('hidden');
     // Reset round checkbox to unchecked when switching to custom
     $('#custom-round').checked = false;
+    if ($('#custom-continuous')) $('#custom-continuous').checked = false;
     $('#custom-height').disabled = false;
     $('#custom-size-x').classList.remove('hidden');
     $('#custom-height').classList.remove('hidden');
     const w = validateLabelWidth($('#custom-width').value);
     const h = validateLabelHeight($('#custom-height').value);
-    state.labelSize = { width: w, height: h, round: false };
+    state.labelSize = { width: w, height: h, round: false, continuous: false };
   } else {
     $('#custom-size').classList.add('hidden');
     const preset = LABEL_SIZES[value];
@@ -2454,6 +2472,7 @@ function handleLabelSizeChange() {
 function handleCustomSizeChange() {
   const w = validateLabelWidth($('#custom-width').value);
   const isRound = $('#custom-round').checked;
+  const isContinuous = !isRound && !!$('#custom-continuous')?.checked;
   const h = isRound ? w : validateLabelHeight($('#custom-height').value);
 
   // Sync height input when round is checked
@@ -2468,9 +2487,10 @@ function handleCustomSizeChange() {
     $('#custom-height').classList.remove('hidden');
   }
 
-  state.labelSize = { width: w, height: h, round: isRound };
+  state.labelSize = { width: w, height: h, round: isRound, continuous: isContinuous };
   state.renderer.setDimensions(state.labelSize.width, state.labelSize.height, state.zoom, isRound);
   updatePrintSize();
+  updateLengthAdjustButtons();
 
   // Auto zoom-to-fit if label is too large at 100% zoom
   zoomToFitIfNeeded();
@@ -2481,6 +2501,7 @@ function handleCustomSizeChange() {
   if ($('#mobile-custom-width')) $('#mobile-custom-width').value = w;
   if ($('#mobile-custom-height')) $('#mobile-custom-height').value = h;
   if ($('#mobile-custom-round')) $('#mobile-custom-round').checked = isRound;
+  if ($('#mobile-custom-continuous')) $('#mobile-custom-continuous').checked = isContinuous;
 }
 
 // =============================================================================
@@ -5842,6 +5863,9 @@ function initMobileUI() {
         $('#mobile-custom-width').value = $('#custom-width').value || '';
         $('#mobile-custom-height').value = $('#custom-height').value || '';
         $('#mobile-custom-round').checked = $('#custom-round').checked || false;
+        if ($('#mobile-custom-continuous')) {
+          $('#mobile-custom-continuous').checked = $('#custom-continuous')?.checked || false;
+        }
         updateMobileCustomSizeVisibility();
       } else {
         mobileCustomSize?.classList.add('hidden');
@@ -5874,11 +5898,13 @@ function initMobileUI() {
     const w = $('#mobile-custom-width')?.value;
     const h = $('#mobile-custom-height')?.value;
     const isRound = $('#mobile-custom-round')?.checked;
+    const isContinuous = !!$('#mobile-custom-continuous')?.checked;
 
     // Sync to desktop inputs
     if ($('#custom-width')) $('#custom-width').value = w;
     if ($('#custom-height')) $('#custom-height').value = isRound ? w : h;
     if ($('#custom-round')) $('#custom-round').checked = isRound;
+    if ($('#custom-continuous')) $('#custom-continuous').checked = isContinuous;
 
     // Trigger the desktop handler
     handleCustomSizeChange();
@@ -5906,6 +5932,7 @@ function initMobileUI() {
     }
     syncMobileCustomToDesktop();
   });
+  $('#mobile-custom-continuous')?.addEventListener('change', syncMobileCustomToDesktop);
 
   // Sync mobile connection type
   const mobileConnType = $('#mobile-conn-type');
@@ -6722,9 +6749,11 @@ function syncMobileLabelSize() {
     const mobileW = $('#mobile-custom-width');
     const mobileH = $('#mobile-custom-height');
     const mobileRound = $('#mobile-custom-round');
+    const mobileContinuous = $('#mobile-custom-continuous');
     if (mobileW) mobileW.value = $('#custom-width')?.value || '';
     if (mobileH) mobileH.value = $('#custom-height')?.value || '';
     if (mobileRound) mobileRound.checked = $('#custom-round')?.checked || false;
+    if (mobileContinuous) mobileContinuous.checked = $('#custom-continuous')?.checked || false;
     // Update visibility based on round
     const isRound = mobileRound?.checked;
     if (mobileH) {
@@ -7073,6 +7102,7 @@ function init() {
   $('#custom-width').addEventListener('change', handleCustomSizeChange);
   $('#custom-height').addEventListener('change', handleCustomSizeChange);
   $('#custom-round').addEventListener('change', handleCustomSizeChange);
+  $('#custom-continuous')?.addEventListener('change', handleCustomSizeChange);
 
   // P12/A30 label length adjust buttons
   $('#length-plus')?.addEventListener('click', () => adjustLabelLength(5));

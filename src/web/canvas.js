@@ -129,7 +129,7 @@ export class CanvasRenderer {
         zoom
       );
     } else {
-      this.setDimensions(this.widthMm, this.heightMm, zoom);
+      this.setDimensions(this.widthMm, this.heightMm, zoom, this.isRound);
     }
   }
 
