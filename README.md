@@ -182,8 +182,11 @@ When the Bluetooth device picker appears, select the device showing a **signal s
 
 ```
 phomymo/
+├── CHANGELOG.md
 ├── Dockerfile
 ├── docker-compose.yml
+├── LICENSE
+├── NOTICE
 ├── src/
 │   └── web/
 │       ├── index.html     # Main UI
@@ -204,6 +207,10 @@ phomymo/
 │           └── validation.js # Input validation
 └── README.md
 ```
+
+## Changelog
+
+See CHANGELOG.md for a lightweight history of changes in this fork.
 
 ## Acknowledgments
 
