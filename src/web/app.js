@@ -4970,6 +4970,56 @@ function hideLoadDialog() {
 }
 
 /**
+ * Start a new blank label without removing saved designs
+ */
+function startNewBlankLabel() {
+  state.elements = [];
+  state.selectedIds = [];
+  state.labelSize = { width: 40, height: 30, round: false };
+  state.templateFields = [];
+  state.templateData = [];
+  state.selectedRecords = [];
+  state.currentDesignName = null;
+  state.multiLabel = {
+    enabled: false,
+    labelWidth: 10,
+    labelHeight: 20,
+    labelsAcross: 4,
+    gapMm: 2,
+    cloneMode: true,
+  };
+  state.activeZone = 0;
+
+  $('#label-size').value = '40x30';
+  $('#custom-size').classList.add('hidden');
+  $('#zone-toolbar').classList.add('hidden');
+
+  state.renderer.disableMultiLabel();
+  state.renderer.setDimensions(state.labelSize.width, state.labelSize.height, state.zoom, false);
+  state.renderer.clearCache();
+
+  resetHistory();
+  updatePrintSize();
+  updateToolbarState();
+  updatePropertiesPanel();
+  updateMobileLabelName();
+  syncMobileLabelSize();
+  detectTemplateFields();
+  render();
+  hideLoadDialog();
+  setStatus('New blank label');
+}
+
+/**
+ * Show saved labels on startup for returning users
+ */
+function showSavedLabelsOnStartup() {
+  if (listDesigns().length > 0) {
+    showLoadDialog();
+  }
+}
+
+/**
  * Export current design to file
  */
 function handleExport() {
@@ -7476,6 +7526,7 @@ function init() {
 
   $('#load-btn').addEventListener('click', showLoadDialog);
   $('#load-cancel').addEventListener('click', hideLoadDialog);
+  $('#load-new-blank').addEventListener('click', startNewBlankLabel);
 
   // Import from file
   $('#import-file-btn').addEventListener('click', () => $('#import-file-input').click());
@@ -8152,8 +8203,12 @@ function init() {
   // Detect template fields on load
   detectTemplateFields();
 
-  // Show info dialog on first visit
-  if (shouldShowInfoOnLoad()) {
+  const hasSavedDesigns = listDesigns().length > 0;
+
+  // Show saved labels first for returning users
+  if (hasSavedDesigns) {
+    showSavedLabelsOnStartup();
+  } else if (shouldShowInfoOnLoad()) {
     showInfoDialog();
   }
 

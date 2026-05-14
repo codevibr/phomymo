@@ -30,4 +30,30 @@ test.describe.serial('Getting Started', () => {
 
     await screenshot(page, CH, 2, 'interface-overview');
   });
+
+  test('shows saved labels on startup with blank label option', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await page.evaluate(() => {
+      localStorage.setItem('phomymo_designs', JSON.stringify({
+        'Kitchen Labels': {
+          elements: [],
+          labelSize: { width: 40, height: 30 },
+          savedAt: Date.now(),
+        },
+      }));
+      localStorage.setItem('phomymo_info_seen', 'true');
+    });
+
+    await page.reload({ waitUntil: 'networkidle' });
+    await waitForAppReady(page);
+
+    await expect(page.locator('#load-dialog')).toBeVisible();
+    await expect(page.locator('.design-item[data-name="Kitchen Labels"]')).toBeVisible();
+    await expect(page.locator('#load-new-blank')).toBeVisible();
+
+    await page.locator('#load-new-blank').click();
+
+    await expect(page.locator('#load-dialog')).toBeHidden();
+    await expect(page.locator('#label-size')).toHaveValue('40x30');
+  });
 });
