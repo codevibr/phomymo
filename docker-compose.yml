@@ -1,0 +1,13 @@
+services:
+  phomymo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        REPO_URL: ${REPO_URL:-https://github.com/codevibr/phomymo.git}
+        REF: ${REF:-main}
+        CACHEBUST: ${CACHEBUST:-1}
+    image: phomymo:latest
+    ports:
+      - "${PHOMYMO_PORT:-8080}:80"
+    restart: unless-stopped

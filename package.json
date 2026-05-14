@@ -10,16 +10,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/transcriptionstream/phomymo.git"
+    "url": "git+https://github.com/codevibr/phomymo.git"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/transcriptionstream/phomymo/issues"
+    "url": "https://github.com/codevibr/phomymo/issues"
   },
-  "homepage": "https://github.com/transcriptionstream/phomymo#readme",
+  "homepage": "https://github.com/codevibr/phomymo#readme",
   "dependencies": {
     "puppeteer": "^24.37.2"
   },

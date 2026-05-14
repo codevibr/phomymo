@@ -63,6 +63,22 @@ test.describe.serial('Element Properties', () => {
     await screenshot(page, CH, 6, 'qr-properties-modified');
   });
 
+  test('QR code data supports multiple lines', async ({ page }) => {
+    await page.click('#add-qr');
+    await page.waitForTimeout(300);
+
+    const jsonData = `{
+  "name": "Phomymo",
+  "type": "label"
+}`;
+
+    await page.locator('#prop-qr-data').fill(jsonData);
+    await page.locator('#prop-qr-data').dispatchEvent('input');
+    await page.waitForTimeout(200);
+
+    await expect(page.locator('#prop-qr-data')).toHaveValue(jsonData);
+  });
+
   test('shape element properties', async ({ page }) => {
     await page.click('#add-shape-btn');
     await page.click('button[data-shape="ellipse"]');

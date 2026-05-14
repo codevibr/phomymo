@@ -23,6 +23,85 @@ python3 -m http.server 8080
 # Open http://localhost:8080 in Chrome
 ```
 
+### Docker
+
+The included Dockerfile builds a small Nginx image and downloads the app source from GitHub during the image build. By default it pulls `main` from `https://github.com/codevibr/phomymo.git`.
+
+Because the image is built from GitHub, local changes must be pushed to the selected repository and branch before they appear in the container.
+
+Build and run:
+
+```bash
+docker build --no-cache -t phomymo:latest .
+docker run --rm -p 8080:80 phomymo:latest
+# Open http://localhost:8080 in Chrome
+```
+
+To build from a different repository or branch:
+
+```bash
+docker build --no-cache \
+  --build-arg REPO_URL=https://github.com/codevibr/phomymo.git \
+  --build-arg REF=your-branch \
+  -t phomymo:latest .
+```
+
+If you want to force Docker to fetch the latest GitHub source without using `--no-cache`, change the `CACHEBUST` build argument:
+
+```bash
+docker build \
+  --build-arg CACHEBUST=$(date +%s) \
+  -t phomymo:latest .
+```
+
+### Docker Compose
+
+The repository also includes `docker-compose.yml`:
+
+```yaml
+services:
+  phomymo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        REPO_URL: ${REPO_URL:-https://github.com/codevibr/phomymo.git}
+        REF: ${REF:-main}
+        CACHEBUST: ${CACHEBUST:-1}
+    image: phomymo:latest
+    ports:
+      - "${PHOMYMO_PORT:-8080}:80"
+    restart: unless-stopped
+```
+
+Run with Compose:
+
+```bash
+docker compose up --build
+# Open http://localhost:8080 in Chrome
+```
+
+Force Compose to rebuild from fresh GitHub source:
+
+```bash
+docker compose build --no-cache
+docker compose up
+```
+
+To point Compose at a fork or branch:
+
+```bash
+REPO_URL=https://github.com/codevibr/phomymo.git REF=your-branch docker compose up --build
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:REPO_URL="https://github.com/codevibr/phomymo.git"
+$env:REF="your-branch"
+docker compose up --build
+```
+
 **Requires:** Chrome, Edge, or another Chromium-based browser. Web Bluetooth is not available in Firefox or Safari. Android Chrome is supported with full touch UI; iOS is not supported. PM-241 printers require USB (WebUSB).
 
 ## Features
@@ -103,6 +182,8 @@ When the Bluetooth device picker appears, select the device showing a **signal s
 
 ```
 phomymo/
+├── Dockerfile
+├── docker-compose.yml
 ├── src/
 │   └── web/
 │       ├── index.html     # Main UI
@@ -141,3 +222,5 @@ If Phomymo is useful to you, consider [making a donation](https://donate.stripe.
 ## License
 
 MIT License - see LICENSE file for details.
+
+This fork preserves attribution to the upstream Phomymo project. See NOTICE for upstream origin and license-context notes.

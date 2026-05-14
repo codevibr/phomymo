@@ -1,0 +1,10 @@
+Phomymo
+
+This project is a fork of Phomymo:
+https://github.com/transcriptionstream/phomymo
+
+The upstream README identified the project as MIT licensed, but no upstream
+LICENSE file was present at the time this fork was prepared.
+
+This fork preserves attribution to the upstream project and carries forward
+the upstream project's stated MIT license intent.
